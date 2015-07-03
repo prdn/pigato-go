@@ -34,7 +34,7 @@ type PigatoCtx struct {
 	client *zmq.Socket //  Socket to broker
 }
 
-type PigatoHandler func(reply map[string]interface{})
+type PigatoHandler func(reply interface{})
 
 func (pcli *PigatoClient) ConnectToBroker() (err error) {
 	if pcli.ctx.client != nil {
@@ -147,7 +147,7 @@ func (pcli *PigatoClient) Flush() {
 
 			req := pcli.reqs[rid]
 
-			rep := make(map[string]interface{})
+			rep := make(interface{})
 			_ = json.Unmarshal([]byte(msg[5]), &rep)
 			req.Cb(rep)
 		} else {

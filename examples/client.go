@@ -32,7 +32,7 @@ func main() {
 	for count = 0; count < rnum; count++ {
 		req := make(Request)
 		req["m"] = message{"test", "foo"}
-		session.Request("echo", req, func(rep map[string]interface{}) {
+		session.Request("echo", req, func(rep interface{}) {
 			answers++
 
 			log.Printf("ANS %d %s", answers, rep["m"].FieldName("Type"))
