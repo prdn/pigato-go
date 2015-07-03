@@ -16,7 +16,7 @@ func randSeq() string {
 
 type PigatoClient struct {
 	broker  string
-	verbose bool //  Print activity to stdout
+	verbose bool
 	reqs    map[string]PigatoReq
 	out     chan PigatoReq
 	ctx     PigatoCtx
@@ -30,7 +30,7 @@ type PigatoReq struct {
 
 type PigatoCtx struct {
 	poller *zmq.Poller
-	client *zmq.Socket //  Socket to broker
+	client *zmq.Socket
 }
 
 type PigatoHandler func(reply interface{})
@@ -103,9 +103,11 @@ func (pcli *PigatoClient) Request(service string, pld interface{}, rep interface
 	req[2] = service
 	req[1] = W_REQUEST
 	req[0] = C_CLIENT
+
 	if pcli.verbose {
 		log.Printf("I: send request to '%s' service: %q\n", service, val)
 	}
+
 	preq := PigatoReq{Cb: cb, Msg: req, Reply: rep}
 	pcli.reqs[rid] = preq
 	pcli.out <- preq
