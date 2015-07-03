@@ -24,8 +24,9 @@ type PigatoClient struct {
 }
 
 type PigatoReq struct {
-	Cb  PigatoHandler
-	Msg []string
+	Reply interface{}
+	Cb    PigatoHandler
+	Msg   []string
 }
 
 type PigatoCtx struct {
@@ -102,7 +103,7 @@ func (pcli *PigatoClient) Close() (err error) {
 
 //  ---------------------------------------------------------------------
 
-func (pcli *PigatoClient) Request(service string, pld interface{}, cb PigatoHandler) {
+func (pcli *PigatoClient) Request(service string, pld interface{}, rep interface{}, cb PigatoHandler) {
 	req := make([]string, 6, 6)
 	rid := randSeq()
 	val, _ := json.Marshal(pld)
@@ -115,7 +116,7 @@ func (pcli *PigatoClient) Request(service string, pld interface{}, cb PigatoHand
 	if pcli.verbose {
 		log.Printf("I: send request to '%s' service: %q\n", service, val)
 	}
-	preq := PigatoReq{Cb: cb, Msg: req}
+	preq := PigatoReq{Cb: cb, Msg: req, Reply: rep}
 	pcli.reqs[rid] = preq
 	pcli.out <- preq
 }
@@ -146,10 +147,8 @@ func (pcli *PigatoClient) Flush() {
 			rid := msg[3]
 
 			req := pcli.reqs[rid]
-
-			rep := make(interface{})
-			_ = json.Unmarshal([]byte(msg[5]), &rep)
-			req.Cb(rep)
+			_ = json.Unmarshal([]byte(msg[5]), req.Reply)
+			req.Cb(req.Reply)
 		} else {
 			break
 		}

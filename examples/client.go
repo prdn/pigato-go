@@ -7,12 +7,15 @@ import (
 	"time"
 )
 
-type message struct {
-	Type, Text string
+type Reply struct {
+	Type string
+	Text string
 }
 
-type Reply map[string]interface{}
-type Request map[string]interface{}
+type Request struct {
+	Type string
+	Text string
+}
 
 func main() {
 	var verbose bool
@@ -30,12 +33,15 @@ func main() {
 
 	var count int
 	for count = 0; count < rnum; count++ {
-		req := make(Request)
-		req["m"] = message{"test", "foo"}
-		session.Request("echo", req, func(rep interface{}) {
+		req := Request{Type: "foo", Text: "bar"}
+		rep := Reply{}
+		session.Request("echo", req, &rep, func(_rep interface{}) {
 			answers++
 
-			log.Printf("ANS %d %s", answers, rep["m"].FieldName("Type"))
+			rep := Reply{}
+			rep = *(_rep.(*Reply))
+
+			log.Printf("ANS %d %s", answers, rep.Type)
 			if answers == rnum {
 				elapsed := time.Since(start)
 				log.Printf("REQ took %s", elapsed)
