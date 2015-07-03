@@ -7,7 +7,6 @@ import (
 	"log"
 	"math/rand"
 	"runtime"
-	"sync"
 	"time"
 )
 
@@ -30,7 +29,6 @@ type PigatoReq struct {
 }
 
 type PigatoCtx struct {
-	sync.Mutex
 	poller *zmq.Poller
 	client *zmq.Socket //  Socket to broker
 }
@@ -66,9 +64,6 @@ func (pcli *PigatoClient) ConnectToBroker() (err error) {
 	return
 }
 
-//  ---------------------------------------------------------------------
-//  Constructor
-
 func NewPigatoClient(broker string, verbose bool) (pcli *PigatoClient, err error) {
 
 	pcli = &PigatoClient{
@@ -90,9 +85,6 @@ func NewPigatoClient(broker string, verbose bool) (pcli *PigatoClient, err error
 	return
 }
 
-//  ---------------------------------------------------------------------
-//  Destructor
-
 func (pcli *PigatoClient) Close() (err error) {
 	if pcli.ctx.client != nil {
 		err = pcli.ctx.client.Close()
@@ -100,8 +92,6 @@ func (pcli *PigatoClient) Close() (err error) {
 	}
 	return
 }
-
-//  ---------------------------------------------------------------------
 
 func (pcli *PigatoClient) Request(service string, pld interface{}, rep interface{}, cb PigatoHandler) {
 	req := make([]string, 6, 6)
