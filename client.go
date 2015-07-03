@@ -2,7 +2,6 @@ package pigato
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	zmq "github.com/pebbe/zmq4"
 	"log"
@@ -12,27 +11,21 @@ import (
 	"time"
 )
 
-var (
-	errPermanent = errors.New("permanent error, abandoning request")
-)
-
 func randSeq() string {
-	return fmt.Sprintf("%04X-%04X", rand.Intn(0x10000), rand.Intn(0x10000))
+	return fmt.Sprintf("%06X%06X", rand.Intn(0x10000), rand.Intn(0x10000))
+}
+
+type PigatoClient struct {
+	broker  string
+	verbose bool //  Print activity to stdout
+	reqs    map[string]PigatoReq
+	out     chan PigatoReq
+	ctx     PigatoCtx
 }
 
 type PigatoReq struct {
 	Cb  PigatoHandler
 	Msg []string
-}
-
-type PigatoClient struct {
-	broker  string
-	verbose bool          //  Print activity to stdout
-	timeout time.Duration //  Request timeout
-	reqs    map[string]PigatoReq
-	//	out     *Queue
-	out chan PigatoReq
-	ctx PigatoCtx
 }
 
 type PigatoCtx struct {
@@ -41,7 +34,7 @@ type PigatoCtx struct {
 	client *zmq.Socket //  Socket to broker
 }
 
-type PigatoHandler func(reply interface{})
+type PigatoHandler func(reply map[string]interface{})
 
 func (pcli *PigatoClient) ConnectToBroker() (err error) {
 	if pcli.ctx.client != nil {
@@ -80,7 +73,6 @@ func NewPigatoClient(broker string, verbose bool) (pcli *PigatoClient, err error
 	pcli = &PigatoClient{
 		broker:  broker,
 		verbose: verbose,
-		timeout: time.Second,
 	}
 	err = pcli.ConnectToBroker()
 	runtime.SetFinalizer(pcli, (*PigatoClient).Close)
@@ -109,11 +101,6 @@ func (pcli *PigatoClient) Close() (err error) {
 }
 
 //  ---------------------------------------------------------------------
-
-//  Set request timeout.
-func (pcli *PigatoClient) SetTimeout(timeout time.Duration) {
-	pcli.timeout = timeout
-}
 
 func (pcli *PigatoClient) Request(service string, pld interface{}, cb PigatoHandler) {
 	req := make([]string, 6, 6)
@@ -159,7 +146,10 @@ func (pcli *PigatoClient) Flush() {
 			rid := msg[3]
 
 			req := pcli.reqs[rid]
-			req.Cb(msg[5])
+
+			rep := make(map[string]interface{})
+			_ = json.Unmarshal([]byte(msg[5]), &rep)
+			req.Cb(rep)
 		} else {
 			break
 		}

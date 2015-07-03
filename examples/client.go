@@ -1,20 +1,18 @@
 package main
 
 import (
-	pigato "github.com/prdn/pigato-go"
+	pigato "../"
 	"log"
 	"os"
-	"pigato"
 	"time"
 )
 
-type Request struct {
-	S string `json:"s"`
+type message struct {
+	Type, Text string
 }
 
-type Reply struct {
-	S string `json:"s"`
-}
+type Reply map[string]interface{}
+type Request map[string]interface{}
 
 func main() {
 	var verbose bool
@@ -23,7 +21,7 @@ func main() {
 	}
 	session, _ := pigato.NewPigatoClient("tcp://127.0.0.1:55555", verbose)
 
-	var rnum = 50000
+	var rnum = 500
 
 	start := time.Now()
 
@@ -32,11 +30,12 @@ func main() {
 
 	var count int
 	for count = 0; count < rnum; count++ {
-		req := &Request{S: "hello"}
-
-		session.Request("echo", req, func(reply interface{}) {
+		req := make(Request)
+		req["m"] = message{"test", "foo"}
+		session.Request("echo", req, func(rep map[string]interface{}) {
 			answers++
-			//log.Printf("ANS %d", answers)
+
+			log.Printf("ANS %d %s", answers, rep["m"].FieldName("Type"))
 			if answers == rnum {
 				elapsed := time.Since(start)
 				log.Printf("REQ took %s", elapsed)
