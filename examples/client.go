@@ -24,7 +24,7 @@ func main() {
 	}
 	session, _ := pigato.NewPigatoClient("tcp://127.0.0.1:55555", verbose)
 
-	var rnum = 500
+	var rnum = 50000
 
 	start := time.Now()
 
@@ -39,7 +39,9 @@ func main() {
 
 			rep := _rep.(*Reply)
 
-			log.Printf("%d) Type: %s | Text: %s", answers, rep.Type, rep.Text)
+			if verbose {
+				log.Printf("%d) Type: %s | Text: %s", answers, rep.Type, rep.Text)
+			}
 			if answers == rnum {
 				elapsed := time.Since(start)
 				log.Printf("REQ took %s", elapsed)
