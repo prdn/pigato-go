@@ -1,9 +1,9 @@
 package pigato
 
 import (
-	pgtlib "./lib"
 	"fmt"
 	zmq "github.com/pebbe/zmq4"
+	pgtlib "github.com/prdn/pigato-go/lib"
 	"log"
 	"runtime"
 	"time"

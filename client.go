@@ -1,10 +1,10 @@
 package pigato
 
 import (
-	pgtlib "./lib"
 	"encoding/json"
 	"fmt"
 	zmq "github.com/pebbe/zmq4"
+	pgtlib "github.com/prdn/pigato-go/lib"
 	"log"
 	"math/rand"
 	"runtime"
