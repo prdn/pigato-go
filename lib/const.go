@@ -1,4 +1,4 @@
-package pigato
+package pgtlib
 
 const (
 	C_CLIENT = "C"

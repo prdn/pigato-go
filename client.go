@@ -1,6 +1,7 @@
 package pigato
 
 import (
+	pgtlib "./lib"
 	"encoding/json"
 	"fmt"
 	zmq "github.com/pebbe/zmq4"
@@ -15,11 +16,12 @@ func randSeq() string {
 }
 
 type PigatoClient struct {
-	broker  string
-	verbose bool
-	reqs    map[string]PigatoReq
-	out     chan PigatoReq
-	ctx     PigatoCtx
+	broker   string
+	identity string
+	verbose  bool
+	reqs     map[string]PigatoReq
+	out      chan PigatoReq
+	ctx      PigatoCtx
 }
 
 type PigatoReq struct {
@@ -41,8 +43,8 @@ func (pcli *PigatoClient) ConnectToBroker() (err error) {
 		pcli.ctx.client = nil
 	}
 	pcli.ctx.client, err = zmq.NewSocket(zmq.DEALER)
-	identity := randSeq()
-	pcli.ctx.client.SetIdentity(identity)
+	pcli.identity = randSeq()
+	pcli.ctx.client.SetIdentity(pcli.identity)
 
 	if err != nil {
 		if pcli.verbose {
@@ -95,14 +97,14 @@ func (pcli *PigatoClient) Close() (err error) {
 
 func (pcli *PigatoClient) Request(service string, pld interface{}, rep interface{}, cb PigatoHandler) {
 	req := make([]string, 6, 6)
-	rid := randSeq()
+	rid := pcli.identity + randSeq()
 	val, _ := json.Marshal(pld)
 	req[5] = ""
 	req[4] = string(val)
 	req[3] = rid
 	req[2] = service
-	req[1] = W_REQUEST
-	req[0] = C_CLIENT
+	req[1] = pgtlib.W_REQUEST
+	req[0] = pgtlib.C_CLIENT
 
 	if pcli.verbose {
 		log.Printf("I: send request to '%s' service: %q\n", service, val)
@@ -132,15 +134,19 @@ func (pcli *PigatoClient) Flush() {
 				break
 			}
 
-			if msg[0] != C_CLIENT {
+			if msg[0] != pgtlib.C_CLIENT {
 				break
 			}
 
 			rid := msg[3]
 
-			req := pcli.reqs[rid]
-			_ = json.Unmarshal([]byte(msg[5]), req.Reply)
-			req.Cb(req.Reply)
+			if req, exists := pcli.reqs[rid]; exists {
+				delete(pcli.reqs, rid)
+				if len(msg) >= 4 {
+					_ = json.Unmarshal([]byte(msg[5]), req.Reply)
+				}
+				req.Cb(req.Reply)
+			}
 		} else {
 			break
 		}

@@ -24,7 +24,7 @@ func main() {
 	}
 	session, _ := pigato.NewPigatoClient("tcp://127.0.0.1:55555", verbose)
 
-	var rnum = 50000
+	var rnum = 100000
 
 	start := time.Now()
 
